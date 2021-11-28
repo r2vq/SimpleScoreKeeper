@@ -51,37 +51,7 @@ document.addEventListener("click", e => {
   }
 });
 
-function onAddClick() {
-  let input = document.querySelector("#nameInput");
-  let name = input.value;
-  if (name == "") {
-    alert("Please enter a name");
-    return;
-  }
-
-  addPlayer(name);
-  input.value = "";
-}
-
-function onDeleteClick(player) {
-  let shouldDelete = confirm("Remove this user? This can't be undone.");
-  if (shouldDelete) {
-    player.remove();
-  }
-}
-
-function updateScore(oldScore, change, scoreRow) {
-  let score = oldScore + change;
-  scoreRow.setText(score);
-  if (score < 0) {
-    scoreRow.addClass("negative");
-  } else {
-    scoreRow.removeClass("negative");
-  }
-  return score;
-}
-
-function addPlayer(name) {
+function addPlayer(name, initialScore) {
   let playersWrapper = document.querySelector("#players");
 
   let playerBox = playersWrapper.addChild("div")
@@ -97,14 +67,18 @@ function addPlayer(name) {
     .addProperty("type", "button")
     .addProperty("value", "X")
     .addClickListener(e => {
-      onDeleteClick(playerBox);
+      onDeleteClick(name, playerBox);
     });
 
-  let score = 0;
+  let score = initialScore;
 
   let scoreRow = playerBox.addChild("div")
     .addClass("playerScoreRow")
     .setText(score);
+
+  if (score < 0) {
+    scoreRow.addClass("negative");
+  }
 
   let modifierRow = playerBox.addChild("div")
     .addClass("playerModifierRow");
@@ -113,7 +87,7 @@ function addPlayer(name) {
     .addProperty("type", "button")
     .addProperty("value", "-")
     .addClickListener(e => {
-      score = updateScore(score, -parseInt(changeInput.value), scoreRow);
+      score = updateScore(name, score, -parseInt(changeInput.value), scoreRow);
     });
   let changeInput = modifierRow.addChild("input")
     .addClass("playerChange")
@@ -124,8 +98,44 @@ function addPlayer(name) {
     .addProperty("type", "button")
     .addProperty("value", "+")
     .addClickListener(e => {
-      score = updateScore(score, parseInt(changeInput.value), scoreRow);
+      score = updateScore(name, score, parseInt(changeInput.value), scoreRow);
     });
+}
+
+function onAddClick() {
+  let input = document.querySelector("#nameInput");
+  let name = input.value;
+  if (name == "") {
+    alert("Please enter a name");
+    return;
+  }
+  if (localStorage.getItem(name)) {
+    return;
+  }
+
+  addPlayer(name, 0);
+  localStorage.setItem(name, 0);
+  input.value = "";
+}
+
+function onDeleteClick(name, player) {
+  let shouldDelete = confirm("Remove this user? This can't be undone.");
+  if (shouldDelete) {
+    player.remove();
+    localStorage.removeItem(name);
+  }
+}
+
+function updateScore(name, oldScore, change, scoreRow) {
+  let score = oldScore + change;
+  scoreRow.setText(score);
+  if (score < 0) {
+    scoreRow.addClass("negative");
+  } else {
+    scoreRow.removeClass("negative");
+  }
+  localStorage.setItem(name, score);
+  return score;
 }
 
 /***************
@@ -151,4 +161,10 @@ function addPlayer(name) {
   let playersWrapper = scoresDiv.addChild("div")
     .addClass("playersWrapper")
     .setId("players");
+
+  for (var i = 0, len = localStorage.length; i < len; ++i) {
+    let savedName = localStorage.key(i);
+    let savedScore = parseInt(localStorage.getItem(savedName));
+    addPlayer(savedName, savedScore);
+  }
 })();
