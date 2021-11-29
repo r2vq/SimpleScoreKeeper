@@ -3,11 +3,18 @@ let scoresDiv = document.querySelector("#scores");
 /********************
  * Helper Functions *
  ********************/
+Array.prototype.sortf = function(comparator) {
+  let copy = [];
+  this.forEach(e => copy.push(e));
+  copy.sort(comparator);
+  return copy;
+};
+
 HTMLElement.prototype.addChild = function(name) {
   let element = document.createElement(name);
   this.appendChild(element);
   return element;
-}
+};
 
 HTMLElement.prototype.addClass = function(name) {
   this.classList.add(name);
@@ -17,12 +24,12 @@ HTMLElement.prototype.addClass = function(name) {
 HTMLElement.prototype.addClickListener = function(click) {
   this.addEventListener("click", click);
   return this;
-}
+};
 
 HTMLElement.prototype.addProperty = function(name, value) {
   this.setAttribute(name, value);
   return this;
-}
+};
 
 HTMLElement.prototype.removeClass = function(name) {
   this.classList.remove(name);
@@ -32,11 +39,24 @@ HTMLElement.prototype.removeClass = function(name) {
 HTMLElement.prototype.setId = function(name) {
   this.id = name;
   return this;
-}
+};
 
 HTMLElement.prototype.setText = function(text) {
   this.innerText = text;
   return this;
+};
+
+Storage.prototype.map = function(mapper) {
+  let entries = [];
+  for (let i = 0, len = this.length; i < len; i++) {
+    let key = this.key(i);
+    let value = this.getItem(key);
+    entries.push({
+      key: key,
+      value: value
+    });
+  }
+  return entries.map(mapper);
 };
 
 /**********************
@@ -51,6 +71,33 @@ document.addEventListener("click", e => {
   }
 });
 
+function onAddClick() {
+  let input = document.querySelector("#nameInput");
+  let name = input.value;
+  if (name == "") {
+    alert("Please enter a name");
+    return;
+  }
+  if (localStorage.getItem(name)) {
+    return;
+  }
+
+  addPlayer(name, 0);
+  localStorage.setItem(name, 0);
+  input.value = "";
+}
+
+function onDeleteClick(name, player) {
+  let shouldDelete = confirm("Remove this user? This can't be undone.");
+  if (shouldDelete) {
+    player.remove();
+    localStorage.removeItem(name);
+  }
+}
+
+/************************
+ * Functional Functions *
+ ************************/
 function addPlayer(name, initialScore) {
   let playersWrapper = document.querySelector("#players");
 
@@ -102,28 +149,14 @@ function addPlayer(name, initialScore) {
     });
 }
 
-function onAddClick() {
-  let input = document.querySelector("#nameInput");
-  let name = input.value;
-  if (name == "") {
-    alert("Please enter a name");
-    return;
-  }
-  if (localStorage.getItem(name)) {
-    return;
-  }
-
-  addPlayer(name, 0);
-  localStorage.setItem(name, 0);
-  input.value = "";
-}
-
-function onDeleteClick(name, player) {
-  let shouldDelete = confirm("Remove this user? This can't be undone.");
-  if (shouldDelete) {
-    player.remove();
-    localStorage.removeItem(name);
-  }
+function getSavedScores() {
+  localStorage
+    .map(entry => ({
+      name: entry.key,
+      score: parseInt(entry.value)
+    }))
+    .sortf((first, second) => first.name.localeCompare(second.name))
+    .forEach(player => addPlayer(player.name, player.score));
 }
 
 function updateScore(name, oldScore, change, scoreRow) {
@@ -161,14 +194,11 @@ function updateScore(name, oldScore, change, scoreRow) {
     .addProperty("value", "Add")
     .setId("addButton");
 
-  // For the players
+  // Create container for the players
   let playersWrapper = scoresDiv.addChild("div")
     .addClass("playersWrapper")
     .setId("players");
 
-  for (var i = 0, len = localStorage.length; i < len; ++i) {
-    let savedName = localStorage.key(i);
-    let savedScore = parseInt(localStorage.getItem(savedName));
-    addPlayer(savedName, savedScore);
-  }
+  // Reload saved players
+  getSavedScores();
 })();
