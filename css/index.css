@@ -1,3 +1,7 @@
+body {
+  margin: 8px 0 0 0;
+}
+
 input.name {
   border-radius: 20px;
   font-size: 20px;
@@ -52,7 +56,6 @@ input.add {
 .playerChange {
   font-size: 20px;
   text-align: center;
-  width: 100px;
 }
 
 .playerModifierRow {
@@ -78,6 +81,7 @@ input.add {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 #scores {

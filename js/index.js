@@ -127,6 +127,10 @@ function onDeleteClick(name, player) {
 }
 
 function updateScore(name, oldScore, change, scoreRow) {
+  if (isNaN(change)) {
+    alert(`That is not a number. Please enter a real number.`)
+    return score;
+  }
   let score = oldScore + change;
   scoreRow.setText(score);
   if (score < 0) {
